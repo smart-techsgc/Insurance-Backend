@@ -6,10 +6,10 @@ COPY package.json .
 
 RUN yarn install
 
-# COPY . .
+COPY . .
 
-# RUN yarn run migrate
+RUN yarn run migrate
 
-# EXPOSE 9999
+EXPOSE 9999
 
-# CMD [ "yarn", "run", "start" ]
+CMD [ "yarn", "run", "start" ]
