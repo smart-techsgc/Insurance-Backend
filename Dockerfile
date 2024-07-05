@@ -4,12 +4,12 @@ WORKDIR /app/sgc_project
 
 COPY package.json .
 
-RUN npm install
+RUN yarn install
 
 COPY . .
 
-RUN npm run migrate
+RUN yarn run migrate
 
 EXPOSE 9999
 
-CMD [ "npm", "run", "start" ]
+CMD [ "yarn", "run", "start" ]
