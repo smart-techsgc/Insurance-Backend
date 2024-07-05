@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { prisma } from "../utils/context";
 import JWT from "jsonwebtoken";
 import speakeasy from "speakeasy";
-import { comparePassword, hashPassword } from "../utils/hashPasswords";
 import { sendEmail } from "../utils/emailService";
 
 const JWT_SECRET: any = process.env.JWT_SECRET;
