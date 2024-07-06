@@ -3,6 +3,12 @@ import { prisma } from "../utils/context";
 import JWT from "jsonwebtoken";
 import speakeasy from "speakeasy";
 import { sendEmail } from "../utils/emailService";
+import {
+  UserInterface,
+  UserResponse,
+} from "../utils/Interfaces/userInterfaces";
+import { userSchema } from "../utils/Validators/userValidator";
+import { stringify } from "querystring";
 
 const JWT_SECRET: any = process.env.JWT_SECRET;
 
@@ -23,13 +29,15 @@ export class UserService {
         phone,
         photo,
         address,
-      } = req.body;
+        accessLevelId,
+      }: UserInterface = req.body;
       const user = await prisma.users.create({
         data: {
           email,
           name: `${firstName} ${otherName} ${lastName}`,
           createdBy: Number(createdBy),
           userType,
+          accessLevelId: Number(accessLevelId),
           employeeInfo: {
             create: {
               firstName,
@@ -45,10 +53,24 @@ export class UserService {
             },
           },
         },
+        select: {
+          employeeInfo: true,
+        },
       });
-      return res.status(201).json({ msg: "User created successfully", user });
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "User Created successfully",
+        data: user,
+      });
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Internal Server Error",
+        data: null,
+        error: error,
+      });
     }
   };
 
@@ -68,7 +90,9 @@ export class UserService {
         phone,
         photo,
         address,
-      } = req.body;
+        updatedBy,
+        accessLevelId,
+      }: UserInterface = req.body;
       const user = await prisma.users.update({
         where: {
           email,
@@ -76,8 +100,10 @@ export class UserService {
         data: {
           email,
           name: `${firstName} ${otherName} ${lastName}`,
-          createdBy: Number(createdBy),
           userType,
+          accessLevelId,
+          updatedBy: Number(updatedBy),
+          updatedAt: new Date(),
           employeeInfo: {
             update: {
               firstName,
@@ -93,32 +119,103 @@ export class UserService {
             },
           },
         },
+        include: {
+          employeeInfo: true,
+        },
       });
-      return res.status(201).json({ msg: "User created successfully", user });
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "User updated successfully",
+        data: user,
+      });
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error" });
+      console.log(error);
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Internal Server Error",
+        data: null,
+        error,
+      });
+    }
+  };
+  deleteUser = async (req: Request, res: Response) => {
+    try {
+      const { email, updatedBy }: UserInterface = req.body;
+      const user = await prisma.users.update({
+        where: {
+          email,
+          updatedAt: new Date(),
+          updatedBy,
+        },
+        data: {
+          active: false,
+        },
+        include: {
+          employeeInfo: true,
+        },
+      });
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "User archived successfully",
+        data: user,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Internal Server Error",
+        data: null,
+        error,
+      });
     }
   };
 
   loginUser = async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const { resendOTP } = req.query;
+    const { email }: UserInterface = req.body;
     try {
-      const existance: any = await prisma.users.findUnique({
+      const existance: { id: number; name: string; email: string } =
+        await prisma.users.findUnique({
+          where: {
+            email,
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        });
+
+      if (!existance) {
+        return res.status(404).json({
+          success: true,
+          statusCode: 404,
+          message: "Invalid Email",
+          data: null,
+        });
+      }
+
+      const otpExistance = await prisma.otp.findUnique({
         where: {
           email,
         },
       });
 
-      if (!existance) {
-        return res.status(404).json({ message: "Invalid Email", data: null });
-      }
+      if (otpExistance) {
+        let otp = speakeasy.totp({
+          secret: otpExistance.otp,
+          encoding: "base32",
+        });
 
-      if (Boolean(resendOTP)) {
-        await prisma.otp.delete({
-          where: {
-            email,
-          },
+        // Send OTP to user
+        sendEmail(`Your OTP ${otp}`, email, "OTP");
+        return res.status(200).json({
+          success: true,
+          statusCode: 200,
+          message: "OTP sent successfully",
+          data: null,
         });
       }
 
@@ -142,15 +239,26 @@ export class UserService {
 
       // Send OTP to user
       sendEmail(`Your OTP ${otp}`, email, "OTP");
-      res.status(200).json({ status: "OTP sent Successfully" });
+      return res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "OTP sent successfully",
+        data: null,
+      });
     } catch (error) {
-      res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Internal Server Error",
+        data: null,
+        error,
+      });
     }
   };
 
   verifyOTP = async (req: Request, res: Response) => {
     const OTP_EXPIRATION_TIME = 300;
-    const { email, otp } = req.body;
+    const { email, otp }: { email: string; otp: string | number } = req.body;
     try {
       const existance: any = await prisma.otp.findUnique({
         where: {
@@ -165,18 +273,36 @@ export class UserService {
               email: true,
               name: true,
               userType: true,
+              accessLevel: {
+                select: {
+                  id: true,
+                  name: true,
+                  permissions: true,
+                },
+              },
             },
           },
         },
       });
 
       if (!existance) {
-        return res.status(404).json({ message: "Invalid Email", data: null });
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "Invalid Email",
+          data: null,
+        });
       }
       const currentTime = Date.now();
       if (currentTime - existance.createdAt > OTP_EXPIRATION_TIME * 1000) {
-        return res.status(400).send("OTP has expired");
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "OTP expired",
+          data: null,
+        });
       }
+
       const verified = speakeasy.totp.verify({
         secret: existance.otp,
         encoding: "base32",
@@ -191,10 +317,11 @@ export class UserService {
             name: existance.user.name,
             email: existance.user.email,
             userType: existance.user.userType,
+            accessLevel: existance.user.accessLevel,
           },
           JWT_SECRET,
           {
-            expiresIn: "12h",
+            expiresIn: "24h",
           }
         );
 
@@ -204,14 +331,28 @@ export class UserService {
           },
         });
 
-        return res
-          .status(200)
-          .json({ status: "Login Successfully", token: token });
+        return res.status(200).json({
+          success: true,
+          statusCode: 200,
+          message: "Login Successfully",
+          data: { token },
+        });
       } else {
-        res.status(400).send("Invalid OTP");
+        res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "Invalid OTP",
+          data: null,
+        });
       }
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Internal Server Error",
+        data: null,
+        error,
+      });
     }
   };
   getUser = async (req: Request, res: Response) => {
@@ -221,20 +362,73 @@ export class UserService {
         where: {
           email: email,
         },
-        select: {
-          name: true,
-          email: true,
-          id: true,
+        include: {
+          employeeInfo: true,
         },
       });
       if (!existance) {
-        return res.status(404).json({ message: "User Not Found", data: null });
+        return res.status(404).json({
+          sucess: false,
+          statusCode: 404,
+          message: "No User Found",
+          data: null,
+        });
       }
-      return res
-        .status(200)
-        .json({ message: "Operation Successful", data: existance });
+      return res.status(200).json({
+        sucess: true,
+        statusCode: 200,
+        message: "Operation Successful",
+        data: existance,
+      });
     } catch (error) {
-      return res.status(500).json({ message: "Internal Server Error" });
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Internal Server Error",
+        data: null,
+        error,
+      });
+    }
+  };
+
+  listUsers = async (req: Request, res: Response) => {
+    try {
+      const { userType }: any = req.query;
+
+      const existance: any = await prisma.users.findMany({
+        where: {
+          userType: userType,
+        },
+        orderBy: {
+          id: "desc",
+        },
+        include: {
+          employeeInfo: true,
+        },
+      });
+      if (!existance) {
+        return res.status(404).json({
+          sucess: false,
+          statusCode: 404,
+          message: "No User Found",
+          data: null,
+        });
+      }
+      return res.status(200).json({
+        sucess: true,
+        statusCode: 200,
+        message: "Operation Successful",
+        data: existance,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Internal Server Error",
+        data: null,
+        error,
+      });
     }
   };
 }

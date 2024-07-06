@@ -52,12 +52,14 @@ model otp {
 }
 
 model accessLevel {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
   description String?
   permissions Json
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   createdBy   Int
+  updatedAt   DateTime?
+  updatedBy   Int?
   users       users[]
 }
 

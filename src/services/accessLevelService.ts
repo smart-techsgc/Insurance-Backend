@@ -6,6 +6,25 @@ export class AccessLevelService {
     const { name, description, permissions, createdBy, assignedUsers } =
       req.body;
     try {
+      const checkExistance = await prisma.accessLevel.findUnique({
+        where: {
+          name,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      if (checkExistance) {
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "Access Level name already exists",
+          data: null,
+        });
+      }
+
       const response = await prisma.accessLevel.create({
         data: {
           name,
@@ -18,7 +37,7 @@ export class AccessLevelService {
       if (assignedUsers) {
         const assignUsers = await prisma.users.updateMany({
           where: {
-            id: {
+            email: {
               in: assignedUsers,
             },
           },
@@ -45,19 +64,25 @@ export class AccessLevelService {
           },
         },
       });
-      res
-        .status(200)
-        .json({ message: "Access Level Created Succesfully", data: data });
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "Access Level Created Succesfully",
+        data: data,
+      });
     } catch (error: any) {
       return res.status(500).json({
+        success: false,
+        statusCode: 500,
         message: "Access Level failed to create",
-        data: error.message,
+        data: null,
+        error,
       });
     }
   };
 
   updateAccessLevel = async (req: Request, res: Response) => {
-    const { id, name, description, permissions, createdBy, assignedUsers } =
+    const { id, name, description, permissions, updatedBy, assignedUsers } =
       req.body;
     try {
       const response = await prisma.accessLevel.update({
@@ -67,8 +92,9 @@ export class AccessLevelService {
         data: {
           name,
           description,
-          createdBy,
           permissions,
+          updatedBy,
+          updatedAt: new Date(),
         },
         select: {
           id: true,
@@ -87,7 +113,7 @@ export class AccessLevelService {
       if (assignedUsers) {
         await prisma.users.updateMany({
           where: {
-            id: {
+            email: {
               in: assignedUsers,
             },
           },
@@ -96,13 +122,19 @@ export class AccessLevelService {
           },
         });
       }
-      res
-        .status(200)
-        .json({ message: "Access Level updated Succesfully", data: response });
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "Access Level updated Succesfully",
+        data: response,
+      });
     } catch (error: any) {
       return res.status(500).json({
-        message: "Access Level failed to create",
-        data: error.message,
+        success: false,
+        statusCode: 500,
+        message: "Access Level failed to update",
+        data: null,
+        error,
       });
     }
   };
@@ -126,56 +158,145 @@ export class AccessLevelService {
           },
         },
       });
-      res.status(200).json({ message: "Operation successful", data: data });
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "Operation Successful",
+        data: data,
+      });
     } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: "Operation Failed", data: error.message });
+      return res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Access Level failed to fetch",
+        data: null,
+        error,
+      });
+    }
+  };
+  getAccessLevel = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.query;
+      const data = await prisma.accessLevel.findUnique({
+        where: {
+          id: Number(id),
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          permissions: true,
+          users: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!data) {
+        res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "Access Level Id not found",
+          data: data,
+        });
+      }
+      res.status(200).json({
+        success: false,
+        statusCode: 200,
+        message: "Operation Successful",
+        data: data,
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Access Level failed to fetch",
+        data: null,
+        error,
+      });
     }
   };
 
   assignAccessLevelToUser = async (req: Request, res: Response) => {
-    const { user_id, access_level_id } = req.body;
+    const { email, access_level_id } = req.body;
     try {
-      const assign = await prisma.users.update({
+      const checkExistance = await prisma.users.findUnique({
         where: {
-          id: user_id,
+          email,
         },
-        data: {
-          accessLevel: access_level_id,
+        select: {
+          id: true,
+          email: true,
         },
       });
-      if (!assign) {
-        res.status(500).json({ message: "Invalid User Id" });
+      if (!checkExistance) {
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "User Not found",
+          data: null,
+        });
       }
-      res.status(200).json({ message: "Operation successful" });
+      const assign = await prisma.users.update({
+        where: {
+          email,
+        },
+        data: {
+          accessLevelId: Number(access_level_id),
+        },
+      });
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "Operation Successful",
+        data: assign,
+      });
     } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: "Operation Failed", data: error.message });
+      console.log(error);
+      return res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Failed to assign access level to Users",
+        data: null,
+        error,
+      });
     }
   };
 
   deleteAccessLevel = async (req: Request, res: Response) => {
-    const { id } = req.body;
+    const { id } = req.query;
     try {
       const unAssign = await prisma.users.updateMany({
         where: {
-          accessLevelId: id,
+          accessLevelId: Number(id),
         },
         data: {
           accessLevelId: null,
         },
       });
-      const deleteAccess = await prisma.accessLevel.delete({ where: { id } });
+      const deleteAccess = await prisma.accessLevel.delete({
+        where: { id: Number(id) },
+      });
       if (!deleteAccess) {
-        res.status(500).json({ message: "Invalid Access Level Id" });
+        res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "Invalid Access Level Id",
+          data: null,
+        });
       }
       this.listAllAccessLevel(req, res);
     } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: "Operation Failed", data: error.message });
+      return res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Failed to delete Access Level",
+        data: null,
+        error,
+      });
     }
   };
 }
