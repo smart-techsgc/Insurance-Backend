@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx tsc && node dist/src/app.js",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules --respawn src/app.ts",
-    "migrate": "npx prisma migrate generate",
+    "migrate": "npx prisma generate",
     "seed": "node prisma/seed.js"
   },
   "keywords": [],

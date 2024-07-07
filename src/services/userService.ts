@@ -9,6 +9,7 @@ import {
 } from "../utils/Interfaces/userInterfaces";
 import { userSchema } from "../utils/Validators/userValidator";
 import { stringify } from "querystring";
+import { otpTemplate } from "../utils/emailTemplates/OTPTemplate";
 
 const JWT_SECRET: any = process.env.JWT_SECRET;
 
@@ -207,8 +208,13 @@ export class UserService {
           encoding: "base32",
         });
 
+        const emailData = {
+          name: existance.name,
+          otp,
+        };
+
         // Send OTP to user
-        sendEmail(`Your OTP ${otp}`, email, "OTP");
+        sendEmail(otpTemplate(emailData), email, "OTP");
         return res.status(200).json({
           success: true,
           statusCode: 200,
@@ -234,9 +240,13 @@ export class UserService {
         secret: createSecret.otp,
         encoding: "base32",
       });
+      const emailData = {
+        name: existance.name,
+        otp,
+      };
 
       // Send OTP to user
-      sendEmail(`Your OTP ${otp}`, email, "OTP");
+      sendEmail(otpTemplate(emailData), email, "OTP");
       return res.status(200).json({
         success: true,
         statusCode: 200,
