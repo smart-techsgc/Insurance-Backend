@@ -155,6 +155,12 @@ export class AccessLevelService {
             select: {
               id: true,
               name: true,
+              email: true,
+              employeeInfo: {
+                select: {
+                  photo: true,
+                },
+              },
             },
           },
         },
@@ -191,6 +197,12 @@ export class AccessLevelService {
             select: {
               id: true,
               name: true,
+              email: true,
+              employeeInfo: {
+                select: {
+                  photo: true,
+                },
+              },
             },
           },
         },
