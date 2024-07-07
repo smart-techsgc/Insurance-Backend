@@ -71,12 +71,13 @@ export class AccessLevelService {
         data: data,
       });
     } catch (error: any) {
+      console.log(error);
       return res.status(500).json({
         success: false,
         statusCode: 500,
         message: "Access Level failed to create",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -134,7 +135,7 @@ export class AccessLevelService {
         statusCode: 500,
         message: "Access Level failed to update",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -170,7 +171,7 @@ export class AccessLevelService {
         statusCode: 500,
         message: "Access Level failed to fetch",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -204,7 +205,7 @@ export class AccessLevelService {
         });
       }
       res.status(200).json({
-        success: false,
+        success: true,
         statusCode: 200,
         message: "Operation Successful",
         data: data,
@@ -215,7 +216,7 @@ export class AccessLevelService {
         statusCode: 500,
         message: "Access Level failed to fetch",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -261,7 +262,7 @@ export class AccessLevelService {
         statusCode: 500,
         message: "Failed to assign access level to Users",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -295,7 +296,7 @@ export class AccessLevelService {
         statusCode: 500,
         message: "Failed to delete Access Level",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };

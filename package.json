@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && node dist/app.js",
+    "start": "npx tsc && node dist/src/app.js",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules --respawn src/app.ts",
-    "migrate": "npx prisma migrate deploy && npx prisma generate",
+    "migrate": "npx prisma migrate generate",
     "seed": "node prisma/seed.js"
   },
   "keywords": [],

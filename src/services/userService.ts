@@ -69,7 +69,7 @@ export class UserService {
         statusCode: 500,
         message: "Internal Server Error",
         data: null,
-        error: error,
+        error: error.message,
       });
     }
   };
@@ -130,13 +130,12 @@ export class UserService {
         data: user,
       });
     } catch (error) {
-      console.log(error);
       res.status(500).json({
         success: false,
         statusCode: 500,
         message: "Internal Server Error",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -168,7 +167,7 @@ export class UserService {
         statusCode: 500,
         message: "Internal Server Error",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -187,10 +186,9 @@ export class UserService {
             email: true,
           },
         });
-
       if (!existance) {
         return res.status(404).json({
-          success: true,
+          success: false,
           statusCode: 404,
           message: "Invalid Email",
           data: null,
@@ -251,7 +249,7 @@ export class UserService {
         statusCode: 500,
         message: "Internal Server Error",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -351,7 +349,7 @@ export class UserService {
         statusCode: 500,
         message: "Internal Server Error",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -386,7 +384,7 @@ export class UserService {
         statusCode: 500,
         message: "Internal Server Error",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
@@ -398,6 +396,9 @@ export class UserService {
       const existance: any = await prisma.users.findMany({
         where: {
           userType: userType,
+          id: {
+            not: 1,
+          },
         },
         orderBy: {
           id: "desc",
@@ -421,13 +422,12 @@ export class UserService {
         data: existance,
       });
     } catch (error) {
-      console.log(error);
       res.status(500).json({
         success: false,
         statusCode: 500,
         message: "Internal Server Error",
         data: null,
-        error,
+        error: error.message,
       });
     }
   };
