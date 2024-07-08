@@ -281,6 +281,11 @@ export class UserService {
               email: true,
               name: true,
               userType: true,
+              employeeInfo: {
+                select: {
+                  photo: true,
+                },
+              },
               accessLevel: {
                 select: {
                   id: true,
@@ -324,6 +329,7 @@ export class UserService {
             id: existance.user.id,
             name: existance.user.name,
             email: existance.user.email,
+            photo: existance.employeeInfo?.photo,
             userType: existance.user.userType,
             accessLevel: existance.user.accessLevel,
           },
