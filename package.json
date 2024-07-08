@@ -7,8 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx tsc && node dist/src/app.js",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules --respawn src/app.ts",
-    "migrate": "npx prisma generate",
-    "seed": "node prisma/seed.js"
+    "migrate": "npx prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -30,5 +29,8 @@
     "speakeasy": "^2.0.0",
     "ts-node-dev": "^2.0.0",
     "yup": "^1.4.0"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

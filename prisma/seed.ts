@@ -4,8 +4,9 @@ const seedUser = async () => {
   try {
     await prisma.users.create({
       data: {
+        id: 1,
         email: "admin@admin.com",
-        name: "Admin",
+        name: "Seven Group Company",
         userType: "admin",
         createdBy: 1,
       },

@@ -32,6 +32,20 @@ export class UserService {
         address,
         accessLevelId,
       }: UserInterface = req.body;
+      const checkExistance = await prisma.users.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      if (checkExistance) {
+        return res.status(404).json({
+          success: false,
+          statusCode: 404,
+          message: "User Already Exists",
+          data: null,
+        });
+      }
       const user = await prisma.users.create({
         data: {
           email,
@@ -329,7 +343,7 @@ export class UserService {
             id: existance.user.id,
             name: existance.user.name,
             email: existance.user.email,
-            photo: existance.employeeInfo?.photo,
+            photo: existance.user.employeeInfo?.photo,
             userType: existance.user.userType,
             accessLevel: existance.user.accessLevel,
           },
