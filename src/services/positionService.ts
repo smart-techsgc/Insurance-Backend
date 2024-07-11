@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import { prisma } from "../utils/context";
 
-export class AccessLevelService {
-  createAccessLevel = async (req: Request, res: Response) => {
-    const { name, description, permissions, createdBy, assignedUsers } =
-      req.body;
+export class PositionService {
+  createPosition = async (req: Request, res: Response) => {
+    const { name, description, createdBy } = req.body;
     try {
-      const checkExistance = await prisma.accessLevel.findUnique({
+      const checkExistance = await prisma.position.findUnique({
         where: {
           name,
         },
@@ -20,34 +19,20 @@ export class AccessLevelService {
         return res.status(404).json({
           success: false,
           statusCode: 404,
-          message: "Access Level name already exists",
+          message: "Position name already exists",
           data: null,
         });
       }
 
-      const response = await prisma.accessLevel.create({
+      const response = await prisma.position.create({
         data: {
           name,
           description,
           createdBy,
-          permissions,
         },
       });
 
-      if (assignedUsers) {
-        const assignUsers = await prisma.users.updateMany({
-          where: {
-            email: {
-              in: assignedUsers,
-            },
-          },
-          data: {
-            accessLevelId: response.id,
-          },
-        });
-      }
-
-      const data = await prisma.accessLevel.findMany({
+      const data = await prisma.position.findMany({
         orderBy: {
           id: "desc",
         },
@@ -55,11 +40,11 @@ export class AccessLevelService {
           id: true,
           name: true,
           description: true,
-          permissions: true,
           users: {
             select: {
               id: true,
               name: true,
+              email: true,
             },
           },
         },
@@ -67,33 +52,30 @@ export class AccessLevelService {
       res.status(200).json({
         success: true,
         statusCode: 200,
-        message: "Access Level Created Succesfully",
+        message: "Position Created Succesfully",
         data: data,
       });
     } catch (error: any) {
-      console.log(error);
       return res.status(500).json({
         success: false,
         statusCode: 500,
-        message: "Access Level failed to create",
+        message: "Position failed to create",
         data: null,
         error: error.message,
       });
     }
   };
 
-  updateAccessLevel = async (req: Request, res: Response) => {
-    const { id, name, description, permissions, updatedBy, assignedUsers } =
-      req.body;
+  updatePosition = async (req: Request, res: Response) => {
+    const { id, name, description, updatedBy, assignedUsers } = req.body;
     try {
-      const response = await prisma.accessLevel.update({
+      const response = await prisma.position.update({
         where: {
-          id: Number(id),
+          id,
         },
         data: {
           name,
           description,
-          permissions,
           updatedBy,
           updatedAt: new Date(),
         },
@@ -101,58 +83,36 @@ export class AccessLevelService {
           id: true,
           name: true,
           description: true,
-          permissions: true,
           users: {
             select: {
               id: true,
               name: true,
+              email: true,
             },
           },
         },
       });
 
-      if (assignedUsers) {
-        await prisma.users.updateMany({
-          where: {
-            email: {
-              in: assignedUsers,
-            },
-          },
-          data: {
-            accessLevelId: response.id,
-          },
-        });
-      } else {
-        await prisma.users.updateMany({
-          where: {
-            accessLevelId: Number(id),
-          },
-          data: {
-            accessLevelId: null,
-          },
-        });
-      }
-
       res.status(200).json({
         success: true,
         statusCode: 200,
-        message: "Access Level updated Succesfully",
+        message: "Position updated Succesfully",
         data: response,
       });
     } catch (error: any) {
       return res.status(500).json({
         success: false,
         statusCode: 500,
-        message: "Access Level failed to update",
+        message: "Position failed to update",
         data: null,
         error: error.message,
       });
     }
   };
 
-  listAllAccessLevel = async (req: Request, res: Response) => {
+  listAllPosition = async (req: Request, res: Response) => {
     try {
-      const data = await prisma.accessLevel.findMany({
+      const data = await prisma.position.findMany({
         orderBy: {
           id: "desc",
         },
@@ -160,7 +120,6 @@ export class AccessLevelService {
           id: true,
           name: true,
           description: true,
-          permissions: true,
           users: {
             select: {
               id: true,
@@ -185,16 +144,16 @@ export class AccessLevelService {
       return res.status(500).json({
         success: false,
         statusCode: 500,
-        message: "Access Level failed to fetch",
+        message: "Position failed to fetch",
         data: null,
         error: error.message,
       });
     }
   };
-  getAccessLevel = async (req: Request, res: Response) => {
+  getPosition = async (req: Request, res: Response) => {
     try {
       const { id } = req.query;
-      const data = await prisma.accessLevel.findUnique({
+      const data = await prisma.position.findUnique({
         where: {
           id: Number(id),
         },
@@ -202,7 +161,6 @@ export class AccessLevelService {
           id: true,
           name: true,
           description: true,
-          permissions: true,
           users: {
             select: {
               id: true,
@@ -222,7 +180,7 @@ export class AccessLevelService {
         res.status(404).json({
           success: false,
           statusCode: 404,
-          message: "Access Level Id not found",
+          message: "Position Id not found",
           data: data,
         });
       }
@@ -236,15 +194,15 @@ export class AccessLevelService {
       return res.status(500).json({
         success: false,
         statusCode: 500,
-        message: "Access Level failed to fetch",
+        message: "Position failed to fetch",
         data: null,
         error: error.message,
       });
     }
   };
 
-  assignAccessLevelToUser = async (req: Request, res: Response) => {
-    const { email, access_level_id } = req.body;
+  assignpositionToUser = async (req: Request, res: Response) => {
+    const { email, position_id } = req.body;
     try {
       const checkExistance = await prisma.users.findUnique({
         where: {
@@ -268,7 +226,7 @@ export class AccessLevelService {
           email,
         },
         data: {
-          accessLevelId: Number(access_level_id),
+          positionId: Number(position_id),
         },
       });
       res.status(200).json({
@@ -282,25 +240,25 @@ export class AccessLevelService {
       return res.status(500).json({
         success: false,
         statusCode: 500,
-        message: "Failed to assign access level to Users",
+        message: "Failed to assign position to Users",
         data: null,
         error: error.message,
       });
     }
   };
 
-  deleteAccessLevel = async (req: Request, res: Response) => {
+  deleteposition = async (req: Request, res: Response) => {
     const { id } = req.query;
     try {
-      const unAssign = await prisma.users.updateMany({
+      await prisma.users.updateMany({
         where: {
-          accessLevelId: Number(id),
+          positionId: Number(id),
         },
         data: {
-          accessLevelId: null,
+          positionId: null,
         },
       });
-      const deleteAccess = await prisma.accessLevel.delete({
+      const deleteAccess = await prisma.position.delete({
         where: { id: Number(id) },
       });
       if (!deleteAccess) {
@@ -311,7 +269,7 @@ export class AccessLevelService {
           data: null,
         });
       }
-      this.listAllAccessLevel(req, res);
+      this.listAllPosition(req, res);
     } catch (error: any) {
       return res.status(500).json({
         success: false,

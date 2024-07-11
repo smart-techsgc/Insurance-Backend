@@ -6,9 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider          = "mysql"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model users {
@@ -25,6 +25,9 @@ model users {
   otp           otp?
   accessLevelId Int?
   accessLevel   accessLevel?  @relation(fields: [accessLevelId], references: [id])
+  mfa           mfa?
+  positionId    Int?
+  position      position?     @relation(fields: [positionId], references: [id])
 }
 
 model employeeInfo {
@@ -51,6 +54,15 @@ model otp {
   user      users    @relation(fields: [email], references: [email])
 }
 
+model mfa {
+  id         Int     @id @default(autoincrement())
+  email      String  @unique
+  mfaSecret  String
+  mfaQrCode  String
+  mfaEnabled Boolean @default(false)
+  user       users   @relation(fields: [email], references: [email])
+}
+
 model accessLevel {
   id          Int       @id @default(autoincrement())
   name        String    @unique
@@ -58,6 +70,17 @@ model accessLevel {
   permissions Json
   createdAt   DateTime  @default(now())
   createdBy   Int
+  updatedAt   DateTime?
+  updatedBy   Int?
+  users       users[]
+}
+
+model position {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdBy   Int
+  createdAt   DateTime  @default(now())
   updatedAt   DateTime?
   updatedBy   Int?
   users       users[]
