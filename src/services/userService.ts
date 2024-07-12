@@ -16,6 +16,34 @@ import uploadFile from "../utils/upload";
 
 const JWT_SECRET: any = process.env.JWT_SECRET;
 
+const selectQuery = {
+  id: true,
+  active: true,
+  email: true,
+  name: true,
+  userType: true,
+  photo: true,
+  employeeInfo: true,
+  accessLevel: {
+    select: {
+      id: true,
+      name: true,
+      permissions: true,
+    },
+  },
+  position: {
+    select: {
+      name: true,
+    },
+  },
+  mfa: {
+    select: {
+      mfaEnabled: true,
+      mfaSecret: true,
+    },
+  },
+};
+
 export class UserService {
   createUser = async (req: Request, res: Response) => {
     try {
@@ -34,6 +62,7 @@ export class UserService {
         photo,
         address,
         accessLevelId,
+        positionId,
       }: UserInterface = req.body;
       const checkExistance = await prisma.users.findUnique({
         where: {
@@ -61,6 +90,8 @@ export class UserService {
           name: `${firstName} ${otherName} ${lastName}`,
           createdBy: Number(createdBy),
           userType,
+          photo,
+          positionId: Number(positionId),
           accessLevelId: Number(accessLevelId),
           employeeInfo: {
             create: {
@@ -73,7 +104,6 @@ export class UserService {
               maritalStatus,
               nationality,
               phone,
-              photo,
             },
           },
           mfa: {
@@ -93,7 +123,7 @@ export class UserService {
       };
 
       // Send OTP to user
-      sendEmail(userTemplate(emailData), email, "OTP");
+      await sendEmail(userTemplate(emailData), email, "OTP");
       return res.status(200).json({
         success: true,
         statusCode: 200,
@@ -115,7 +145,6 @@ export class UserService {
     try {
       const {
         email,
-        createdBy,
         userType,
         firstName,
         lastName,
@@ -129,6 +158,7 @@ export class UserService {
         address,
         updatedBy,
         accessLevelId,
+        positionId,
       }: UserInterface = req.body;
       const user = await prisma.users.update({
         where: {
@@ -138,7 +168,9 @@ export class UserService {
           email,
           name: `${firstName} ${otherName} ${lastName}`,
           userType,
+          photo,
           accessLevelId: Number(accessLevelId),
+          positionId: Number(positionId),
           updatedBy: Number(updatedBy),
           updatedAt: new Date(),
           employeeInfo: {
@@ -152,21 +184,20 @@ export class UserService {
               maritalStatus,
               nationality,
               phone,
-              photo,
             },
           },
         },
-        include: {
-          employeeInfo: true,
-        },
+        select: selectQuery,
       });
+      const token = await this.generateToken(user);
       return res.status(200).json({
         success: true,
         statusCode: 200,
         message: "User updated successfully",
-        data: user,
+        data: { token },
       });
     } catch (error) {
+      console.log(error);
       res.status(500).json({
         success: false,
         statusCode: 500,
@@ -260,6 +291,7 @@ export class UserService {
 
   loginUser = async (req: Request, res: Response) => {
     const { email }: UserInterface = req.body;
+    console.log(email);
     try {
       const existance: { id: number; name: string; email: string } =
         await prisma.users.findUnique({
@@ -280,7 +312,7 @@ export class UserService {
           data: null,
         });
       }
-
+      console.log("exix", existance);
       const otpExistance = await prisma.otp.findUnique({
         where: {
           email,
@@ -298,8 +330,9 @@ export class UserService {
           otp,
         };
 
+        console.log(otp);
         // Send OTP to user
-        sendEmail(otpTemplate(emailData), email, "OTP");
+        // sendEmail(otpTemplate(emailData), email, "OTP");
         return res.status(200).json({
           success: true,
           statusCode: 200,
@@ -366,11 +399,7 @@ export class UserService {
               email: true,
               name: true,
               userType: true,
-              employeeInfo: {
-                select: {
-                  photo: true,
-                },
-              },
+              photo: true,
               accessLevel: {
                 select: {
                   id: true,
@@ -421,6 +450,7 @@ export class UserService {
           },
         });
 
+        console.log(existance);
         return res.status(200).json({
           success: true,
           statusCode: 200,
@@ -455,27 +485,7 @@ export class UserService {
       where: {
         email,
       },
-      select: {
-        id: true,
-        active: true,
-        email: true,
-        name: true,
-        userType: true,
-        employeeInfo: true,
-        accessLevel: {
-          select: {
-            id: true,
-            name: true,
-            permissions: true,
-          },
-        },
-        mfa: {
-          select: {
-            mfaEnabled: true,
-            mfaSecret: true,
-          },
-        },
-      },
+      select: selectQuery,
     });
     if (email === existance.email) {
       const verified = speakeasy.totp.verify({
@@ -486,19 +496,7 @@ export class UserService {
       });
 
       if (verified) {
-        let onboarding = false;
-        if (existance.employeeInfo.dateOfBirth == "null" || null) {
-          onboarding = true;
-        }
-        const token = await this.generateToken({
-          id: existance.id,
-          name: existance.name,
-          email: existance.email,
-          photo: existance.employeeInfo?.photo,
-          userType: existance.userType,
-          accessLevel: existance.accessLevel,
-          onboarding,
-        });
+        const token = await this.generateToken(existance);
 
         await prisma.mfa.update({
           where: {
@@ -637,36 +635,13 @@ export class UserService {
           email,
         },
         data: {
-          employeeInfo: {
-            update: {
-              photo: await uploadFile(file, "profile/images"),
-            },
-          },
+          photo: await uploadFile(file, "profile/images"),
         },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          userType: true,
-          accessLevel: true,
-          employeeInfo: true,
-        },
+        select: selectQuery,
       });
 
-      let onboarding = false;
-      if (user.employeeInfo.dateOfBirth == "null" || null) {
-        onboarding = true;
-      }
+      const token = await this.generateToken(user);
 
-      const token = await this.generateToken({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        photo: user.employeeInfo?.photo,
-        userType: user.userType,
-        accessLevel: user.accessLevel,
-        onboarding,
-      });
       res.status(200).json({
         sucess: true,
         statusCode: 200,
@@ -685,8 +660,35 @@ export class UserService {
     }
   };
 
-  private generateToken = async (data) =>
-    await JWT.sign(data, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+  private generateToken = async (data) => {
+    let onboarding = false;
+    if (data.userType === "admin") {
+      onboarding = false;
+    } else {
+      if (
+        data.employeeInfo.dateOfBirth === "null" ||
+        data.employeeInfo.dateOfBirth === null ||
+        data.employeeInfo.dateOfBirth === ""
+      ) {
+        onboarding = true;
+      }
+    }
+
+    return await JWT.sign(
+      {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        photo: data.photo,
+        userType: data.userType,
+        accessLevel: data.accessLevel,
+        position: data.userType === "admin" ? "admin" : data.position?.name,
+        onboarding,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "24h",
+      }
+    );
+  };
 }

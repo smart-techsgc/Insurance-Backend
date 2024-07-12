@@ -15,6 +15,7 @@ export interface UserInterface {
   address: string;
   updatedBy: number;
   accessLevelId: number;
+  positionId: number;
 }
 
 interface EmployeeInfo {
