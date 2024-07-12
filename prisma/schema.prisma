@@ -17,6 +17,7 @@ model users {
   email         String        @unique
   createdAt     DateTime      @default(now())
   active        Boolean       @default(true)
+  photo         String?
   createdBy     Int
   updatedAt     DateTime?
   updatedBy     Int?
@@ -40,7 +41,6 @@ model employeeInfo {
   maritalStatus maritalStatus?
   nationality   String?
   phone         String?
-  photo         String?
   address       String?
   email         String         @unique
   user          users          @relation(fields: [email], references: [email])

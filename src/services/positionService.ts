@@ -125,11 +125,7 @@ export class PositionService {
               id: true,
               name: true,
               email: true,
-              employeeInfo: {
-                select: {
-                  photo: true,
-                },
-              },
+              photo: true,
             },
           },
         },
@@ -166,11 +162,7 @@ export class PositionService {
               id: true,
               name: true,
               email: true,
-              employeeInfo: {
-                select: {
-                  photo: true,
-                },
-              },
+              photo: true,
             },
           },
         },
@@ -202,11 +194,13 @@ export class PositionService {
   };
 
   assignpositionToUser = async (req: Request, res: Response) => {
-    const { email, position_id } = req.body;
+    const { assignedUsers, position_id } = req.body;
     try {
-      const checkExistance = await prisma.users.findUnique({
+      const checkExistance = await prisma.users.findMany({
         where: {
-          email,
+          email: {
+            in: assignedUsers,
+          },
         },
         select: {
           id: true,
@@ -221,9 +215,11 @@ export class PositionService {
           data: null,
         });
       }
-      const assign = await prisma.users.update({
+      const assign = await prisma.users.updateMany({
         where: {
-          email,
+          email: {
+            in: assignedUsers,
+          },
         },
         data: {
           positionId: Number(position_id),
