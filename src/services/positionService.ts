@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import { prisma } from "../utils/context";
 
 export class PositionService {
-  createPosition = async (req: Request, res: Response) => {
-    const { name, description, createdBy } = req.body;
+  createPosition = async (req: any, res: Response) => {
+    const { name, description } = req.body;
     try {
       const checkExistance = await prisma.position.findUnique({
         where: {
@@ -28,7 +28,7 @@ export class PositionService {
         data: {
           name,
           description,
-          createdBy,
+          createdBy: Number(req?.user.id),
         },
       });
 
@@ -66,7 +66,7 @@ export class PositionService {
     }
   };
 
-  updatePosition = async (req: Request, res: Response) => {
+  updatePosition = async (req: any, res: Response) => {
     const { id, name, description, updatedBy, assignedUsers } = req.body;
     try {
       const response = await prisma.position.update({
@@ -76,7 +76,7 @@ export class PositionService {
         data: {
           name,
           description,
-          updatedBy,
+          updatedBy: Number(req?.user.id),
           updatedAt: new Date(),
         },
         select: {

@@ -45,7 +45,7 @@ const selectQuery = {
 };
 
 export class UserService {
-  createUser = async (req: Request, res: Response) => {
+  createUser = async (req: any, res: Response) => {
     try {
       const {
         email,
@@ -88,7 +88,7 @@ export class UserService {
         data: {
           email,
           name: `${firstName} ${otherName} ${lastName}`,
-          createdBy: Number(createdBy),
+          createdBy: Number(req?.user.id),
           userType,
           photo,
           positionId: Number(positionId),
@@ -141,7 +141,8 @@ export class UserService {
     }
   };
 
-  updateUser = async (req: Request, res: Response) => {
+  updateUser = async (req: any, res: Response) => {
+    console.log();
     try {
       const {
         email,
@@ -156,7 +157,6 @@ export class UserService {
         phone,
         photo,
         address,
-        updatedBy,
         accessLevelId,
         positionId,
       }: UserInterface = req.body;
@@ -171,7 +171,7 @@ export class UserService {
           photo,
           accessLevelId: Number(accessLevelId),
           positionId: Number(positionId),
-          updatedBy: Number(updatedBy),
+          updatedBy: Number(req?.user.id),
           updatedAt: new Date(),
           employeeInfo: {
             update: {
@@ -207,14 +207,14 @@ export class UserService {
       });
     }
   };
-  deleteUser = async (req: Request, res: Response) => {
+  deleteUser = async (req: any, res: Response) => {
     try {
       const { email, updatedBy }: UserInterface = req.body;
       const user = await prisma.users.update({
         where: {
           email,
           updatedAt: new Date(),
-          updatedBy,
+          updatedBy: Number(req?.user.id),
         },
         data: {
           active: false,
@@ -240,7 +240,7 @@ export class UserService {
     }
   };
 
-  toggleUserStatus = async (req: Request, res: Response) => {
+  toggleUserStatus = async (req: any, res: Response) => {
     try {
       const { email }: any = req.query;
       const existingUser = await prisma.users.findUnique({
@@ -265,6 +265,7 @@ export class UserService {
         data: {
           active: !existingUser.active,
           updatedAt: new Date(),
+          updatedBy: Number(req?.user.id),
         },
         include: {
           employeeInfo: true,
@@ -636,6 +637,8 @@ export class UserService {
         },
         data: {
           photo: await uploadFile(file, "profile/images"),
+          updatedBy: Number(req?.user.id),
+          updatedAt: new Date(),
         },
         select: selectQuery,
       });
