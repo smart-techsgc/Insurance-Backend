@@ -17,8 +17,16 @@ accessRouter.put(
   [permission.protect],
   accessService.updateAccessLevel
 );
-accessRouter.delete("/delete", accessService.deleteAccessLevel);
-accessRouter.put("/assign-user", accessService.assignAccessLevelToUser);
+accessRouter.delete(
+  "/delete",
+  [permission.protect],
+  accessService.deleteAccessLevel
+);
+accessRouter.put(
+  "/assign-user",
+  [permission.protect],
+  accessService.assignAccessLevelToUser
+);
 accessRouter.get(
   "/list",
   [permission.protect],

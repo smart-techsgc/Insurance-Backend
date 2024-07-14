@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../utils/context";
 
 export class AccessLevelService {
-  createAccessLevel = async (req: Request, res: Response) => {
+  createAccessLevel = async (req: any, res: Response) => {
     const { name, description, permissions, createdBy, assignedUsers } =
       req.body;
     try {
@@ -29,13 +29,13 @@ export class AccessLevelService {
         data: {
           name,
           description,
-          createdBy,
+          createdBy: Number(req?.user.id),
           permissions,
         },
       });
 
       if (assignedUsers) {
-        const assignUsers = await prisma.users.updateMany({
+        await prisma.users.updateMany({
           where: {
             email: {
               in: assignedUsers,
@@ -82,7 +82,7 @@ export class AccessLevelService {
     }
   };
 
-  updateAccessLevel = async (req: Request, res: Response) => {
+  updateAccessLevel = async (req: any, res: Response) => {
     const { id, name, description, permissions, updatedBy, assignedUsers } =
       req.body;
     try {
@@ -94,7 +94,7 @@ export class AccessLevelService {
           name,
           description,
           permissions,
-          updatedBy,
+          updatedBy: Number(req?.user.id),
           updatedAt: new Date(),
         },
         select: {
