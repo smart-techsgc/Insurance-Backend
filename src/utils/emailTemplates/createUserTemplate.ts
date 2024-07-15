@@ -53,7 +53,7 @@ export const userTemplate = (emailData: { name: string }) => {
             <p>Welcome to SGC-Insurance! We are delighted to have you as a part of our community. At SGC-Insurance, we strive to provide you with the best services and support to meet your insurance needs.</p>
             <p>Here are a few things you can do to get started:</p>
             <ul>
-                <li><strong>Log in to Your Account:</strong> Visit our website and log in with your email. , <a href="https://insurance-frontend-demo.vercel.app/auth/login" class="button">click here</a>, An OTP will be sent to your email to confirm.</li>
+                <li><strong>Log in to Your Account:</strong> Visit our website and log in with your email. , <a href="https://insurance-frontend-fork.vercel.app/auth/login" class="button">click here</a>, An OTP will be sent to your email to confirm.</li>
                 <li><strong>Explore Our Services:</strong> Once logged in, you can explore the various insurance products and services we offer. Whether you're looking for health, life, auto, or home insurance, we have a range of options tailored to your needs.</li>
             </ul>
             <p>If you have any questions or need assistance, feel free to contact our support team at support@sgc-insurance.com.</p>
