@@ -110,8 +110,15 @@ export class AccessLevelService {
           },
         },
       });
-
-      if (assignedUsers) {
+      await prisma.users.updateMany({
+        where: {
+          accessLevelId: Number(id),
+        },
+        data: {
+          accessLevelId: null,
+        },
+      });
+      if (assignedUsers.length > 0) {
         await prisma.users.updateMany({
           where: {
             email: {
@@ -122,7 +129,7 @@ export class AccessLevelService {
             accessLevelId: response.id,
           },
         });
-      } else {
+      } else if (assignedUsers.length == 0) {
         await prisma.users.updateMany({
           where: {
             accessLevelId: Number(id),

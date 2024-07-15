@@ -251,7 +251,7 @@ export class UserService {
 
       if (!existingUser) {
         return res.status(404).json({
-          sucess: false,
+          success: false,
           statusCode: 404,
           message: "No User Found",
           data: null,
@@ -511,7 +511,7 @@ export class UserService {
           success: true,
           statusCode: 200,
           message: "MFA verified successfully",
-          token,
+          data: { token: token },
         });
       } else {
         res.status(404).json({
@@ -544,14 +544,14 @@ export class UserService {
       });
       if (!existance) {
         return res.status(404).json({
-          sucess: false,
+          success: false,
           statusCode: 404,
           message: "No User Found",
           data: null,
         });
       }
       return res.status(200).json({
-        sucess: true,
+        success: true,
         statusCode: 200,
         message: "Operation Successful",
         data: existance,
@@ -587,14 +587,14 @@ export class UserService {
       });
       if (!existance) {
         return res.status(404).json({
-          sucess: false,
+          success: false,
           statusCode: 404,
           message: "No User Found",
           data: null,
         });
       }
       return res.status(200).json({
-        sucess: true,
+        success: true,
         statusCode: 200,
         message: "Operation Successful",
         data: existance,
@@ -625,7 +625,7 @@ export class UserService {
 
       if (!existance) {
         return res.status(404).json({
-          sucess: false,
+          success: false,
           statusCode: 404,
           message: "No User Found",
           data: null,
@@ -646,7 +646,7 @@ export class UserService {
       const token = await this.generateToken(user);
 
       res.status(200).json({
-        sucess: true,
+        success: true,
         statusCode: 200,
         message: "Operation Successfull",
         data: { token },

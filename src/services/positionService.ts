@@ -3,8 +3,8 @@ import { prisma } from "../utils/context";
 
 export class PositionService {
   createPosition = async (req: any, res: Response) => {
-    const { name, description } = req.body;
     try {
+      const { name, description } = req.body;
       const checkExistance = await prisma.position.findUnique({
         where: {
           name,
@@ -23,7 +23,6 @@ export class PositionService {
           data: null,
         });
       }
-
       const response = await prisma.position.create({
         data: {
           name,
@@ -56,6 +55,7 @@ export class PositionService {
         data: data,
       });
     } catch (error: any) {
+      console.log(error);
       return res.status(500).json({
         success: false,
         statusCode: 500,

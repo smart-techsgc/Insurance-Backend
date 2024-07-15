@@ -9,7 +9,7 @@ const positionService = new PositionService();
 
 positionRouter.post(
   "/create",
-  // [permission.protect],
+  [permission.protect],
   positionService.createPosition
 );
 positionRouter.put(
