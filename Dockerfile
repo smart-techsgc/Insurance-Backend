@@ -10,6 +10,6 @@ COPY . .
 
 RUN yarn run migrate
 
-EXPOSE 9999
+EXPOSE 8888
 
 CMD [ "yarn", "run", "start" ]
