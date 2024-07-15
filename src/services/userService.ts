@@ -33,6 +33,7 @@ const selectQuery = {
   },
   position: {
     select: {
+      id: true,
       name: true,
     },
   },
@@ -142,7 +143,6 @@ export class UserService {
   };
 
   updateUser = async (req: any, res: Response) => {
-    console.log();
     try {
       const {
         email,
@@ -160,6 +160,12 @@ export class UserService {
         accessLevelId,
         positionId,
       }: UserInterface = req.body;
+      const existance = await prisma.users.findUnique({
+        where: {
+          email,
+        },
+        select: selectQuery,
+      });
       const user = await prisma.users.update({
         where: {
           email,
@@ -169,8 +175,10 @@ export class UserService {
           name: `${firstName} ${otherName} ${lastName}`,
           userType,
           photo,
-          accessLevelId: Number(accessLevelId),
-          positionId: Number(positionId),
+          accessLevelId: accessLevelId
+            ? Number(accessLevelId)
+            : existance.accessLevel.id,
+          positionId: positionId ? Number(positionId) : existance.position.id,
           updatedBy: Number(req?.user.id),
           updatedAt: new Date(),
           employeeInfo: {
@@ -178,12 +186,19 @@ export class UserService {
               firstName,
               lastName,
               otherName,
-              address,
-              dateOfBirth,
-              gender,
-              maritalStatus,
-              nationality,
-              phone,
+              address: address ? address : existance.employeeInfo.address,
+              dateOfBirth: dateOfBirth
+                ? dateOfBirth
+                : existance.employeeInfo.dateOfBirth,
+
+              gender: gender ? gender : existance.employeeInfo.gender,
+              maritalStatus: maritalStatus
+                ? maritalStatus
+                : existance.employeeInfo.maritalStatus,
+              nationality: nationality
+                ? nationality
+                : existance.employeeInfo.nationality,
+              phone: phone ? phone : existance.employeeInfo.phone,
             },
           },
         },
@@ -197,7 +212,6 @@ export class UserService {
         data: { token },
       });
     } catch (error) {
-      console.log(error);
       res.status(500).json({
         success: false,
         statusCode: 500,
@@ -279,7 +293,6 @@ export class UserService {
         data: user,
       });
     } catch (error) {
-      console.log(error);
       res.status(500).json({
         success: false,
         statusCode: 500,
@@ -292,7 +305,6 @@ export class UserService {
 
   loginUser = async (req: Request, res: Response) => {
     const { email }: UserInterface = req.body;
-    console.log(email);
     try {
       const existance: { id: number; name: string; email: string } =
         await prisma.users.findUnique({
@@ -313,7 +325,6 @@ export class UserService {
           data: null,
         });
       }
-      console.log("exix", existance);
       const otpExistance = await prisma.otp.findUnique({
         where: {
           email,
@@ -331,9 +342,8 @@ export class UserService {
           otp,
         };
 
-        console.log(otp);
         // Send OTP to user
-        // sendEmail(otpTemplate(emailData), email, "OTP");
+        sendEmail(otpTemplate(emailData), email, "OTP");
         return res.status(200).json({
           success: true,
           statusCode: 200,
@@ -440,7 +450,7 @@ export class UserService {
       const verified = speakeasy.totp.verify({
         secret: existance.otp,
         encoding: "base32",
-        token: Number(otp),
+        token: otp,
         window: 1, // Accepts OTPs generated up to one time step before or after the current time
       });
 
@@ -451,7 +461,6 @@ export class UserService {
           },
         });
 
-        console.log(existance);
         return res.status(200).json({
           success: true,
           statusCode: 200,
@@ -492,7 +501,7 @@ export class UserService {
       const verified = speakeasy.totp.verify({
         secret: existance.mfa.mfaSecret,
         encoding: "base32",
-        token: Number(token),
+        token: token,
         window: 1, // Accepts OTPs generated up to one time step before or after the current time
       });
 
@@ -652,7 +661,6 @@ export class UserService {
         data: { token },
       });
     } catch (error) {
-      console.log(error);
       res.status(500).json({
         success: false,
         statusCode: 500,
