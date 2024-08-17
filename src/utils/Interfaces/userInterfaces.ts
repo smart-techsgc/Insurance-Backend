@@ -56,4 +56,6 @@ enum userType {
 enum maritalStatus {
   Single = "Single",
   Married = "Married",
+  Divorced = "Divorced",
+  Widowed = "Widowed",
 }
