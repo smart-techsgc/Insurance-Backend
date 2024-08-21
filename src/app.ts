@@ -9,7 +9,7 @@ import { policyCategoryRouter } from "./routes/policyCategory.route";
 import { policyRouter } from "./routes/policy.routes";
 
 dotenv.config();
-const app = express();
+export const app = express();
 const port = process.env.port || 8000;
 app.use(express.json());
 
